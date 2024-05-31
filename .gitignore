@@ -175,4 +175,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Dataset files
+dataset/
+
 # End of https://mrkandreev.name/snippets/gitignore-generator/#venv,Python,Windows
