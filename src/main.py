@@ -19,11 +19,15 @@ amazon_sales = pd.read_csv("dataset\\Amazon Sale Report.csv",
 # Obtem informações da estrutura do dataframe
 amazon_sales.info()
 
-# Exclui coluna com erros e desnecerrárias
+## Pré Processamento
+# Exclui coluna com erros e desnecerrária
 amazon_sales.drop(columns=['index','Unnamed: 22'], inplace=True)
 
+# Renomeia coluna com espaço no titulo
+amazon_sales.rename(columns={'Sales Channel ': 'Sales Channel'}, inplace=True)
+
 # Define o range de datas que será utilizado. Volumes inconsistentes fora desse range
-amazon_sales = amazon_sales.query('Date >= "2022-04-01" & Date < "2022-06-28"')
+amazon_sales = amazon_sales.query('Date >= "2022-04-04" & Date <= "2022-06-26"')
 
 # Alterar os valores nulos em "Courier Status" de acordo com a condição especificada
 mask = amazon_sales['Courier Status'].isnull()  # Encontra linhas com valores nulos em "Courier Status"
@@ -56,7 +60,7 @@ amazon_sales['fulfilled-by'] = amazon_sales['fulfilled-by'].fillna('India Post')
 # Estatisticas descritivas dos campos numéricos
 amazon_sales[['Qty','Amount']].describe()
 
-# Analise dos dados do valor das vendas
+## Analise dos dados do valor das vendas
 # Criar subplots
 fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 
@@ -82,10 +86,10 @@ df_diaria = amazon_sales.groupby(pd.Grouper(key='Date', freq='D'))['Amount'].sum
 # Calcular as vendas totais por semana
 df_semanal = amazon_sales.groupby(pd.Grouper(key='Date', freq='W'))['Amount'].sum().reset_index()
 # Calcular as vendas totais por mês
-df_mensal = amazon_sales.groupby(pd.Grouper(key='Date', freq='ME'))['Amount'].sum().reset_index()
+# df_mensal = amazon_sales.groupby(pd.Grouper(key='Date', freq='ME'))['Amount'].sum().reset_index()
 
 # Criar subplots
-fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+fig, axs = plt.subplots(1, 2, figsize=(18, 6))
 
 # Gráfico de valor de vendas totais por dia
 axs[0].plot(df_diaria['Date'], df_diaria['Amount'], marker='o')
@@ -105,18 +109,18 @@ axs[1].tick_params(axis='x', rotation=45)
 axs[1].yaxis.set_major_formatter(FuncFormatter(thousands))
 
 # Gráfico de vendas totais por mês
-axs[2].plot(df_mensal['Date'], df_mensal['Amount'], marker='o')
-axs[2].set_title('Valor de Vendas Totais por Mês')
-axs[2].set_xlabel('Data')
-axs[2].grid(True)
-axs[2].tick_params(axis='x', rotation=45)
-axs[2].yaxis.set_major_formatter(FuncFormatter(millions))
+# axs[2].plot(df_mensal['Date'], df_mensal['Amount'], marker='o')
+# axs[2].set_title('Valor de Vendas Totais por Mês')
+# axs[2].set_xlabel('Data')
+# axs[2].grid(True)
+# axs[2].tick_params(axis='x', rotation=45)
+# axs[2].yaxis.set_major_formatter(FuncFormatter(millions))
 
 # Ajustar layout
 plt.tight_layout()
 plt.show()
 
-# Decomposição Sasonal
+# Decomposição Sazonal
 # Usando o Valor de Vendas Diario. O dataset possui apenas 3 meses
 serie_temporal = df_diaria.set_index('Date')['Amount']
 
@@ -157,7 +161,7 @@ plt.legend(loc='upper left')
 plt.tight_layout()
 plt.show()
 
-# Calcular o Indice de Sazonalidade
+# Calcular o Indice de Sazonalidade do valor das vendas 
 # Calcular a média geral das vendas
 media_semanal = df_diaria.groupby(pd.Grouper(key='Date', freq='W'))['Amount'].mean().reset_index()
 media_geral = media_semanal['Amount'].mean()
@@ -184,4 +188,39 @@ plt.tick_params(axis='x', rotation=45)
 plt.tight_layout()
 plt.show()
 
-# Analise das vendas por canal
+## Analise das vendas por canal
+# Calcular o volume financeiro de vendas por Fulfilment
+sales_by_fulfilment = amazon_sales.groupby('Fulfilment')['Amount'].sum().reset_index()
+
+fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+
+# Gráfico de Barras
+axes[0].bar(sales_by_fulfilment['Fulfilment'], sales_by_fulfilment['Amount'], color='skyblue')
+axes[0].set_xlabel('Fulfilment')
+axes[0].set_ylabel('Volume Financeiro de Vendas')
+# axes[0].set_title('Volume Financeiro de Vendas por Fulfilment')
+
+# Adicionar os valores de cada barra
+for bar in axes[0].patches:
+    yval = bar.get_height()
+    axes[0].text(bar.get_x() + bar.get_width()/2, yval, f'{yval/1e6:.2f}M', va='bottom', ha='center')
+
+# Ajustar o eixo y para uma escala mais compreensível
+axes[0].yaxis.set_major_formatter(FuncFormatter(millions))
+axes[0].tick_params(axis='x', rotation=45)
+
+# Gráfico de Pizza
+axes[1].pie(sales_by_fulfilment['Amount'], labels=sales_by_fulfilment['Fulfilment'], autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired(range(len(sales_by_fulfilment))))
+# axes[1].set_title('Distribuição do Volume Financeiro de Vendas por Fulfilment')
+
+# Boxplot
+amazon_sales.boxplot(column='Amount', by='Fulfilment', grid=False, ax=axes[2])
+axes[2].set_xlabel('Fulfilment')
+axes[2].set_ylabel('Volume Financeiro de Vendas')
+# axes[2].set_title('Distribuição do Volume Financeiro de Vendas por Fulfilment')
+axes[2].tick_params(axis='x', rotation=45)
+
+# Ajustar layout para evitar sobreposição
+plt.suptitle('Distribuição do Volume Financeiro de Vendas por Fulfilment')
+plt.tight_layout()
+plt.show()
