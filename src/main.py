@@ -60,9 +60,9 @@ amazon_sales['fulfilled-by'] = amazon_sales['fulfilled-by'].fillna('India Post')
 # Estatisticas descritivas dos campos numéricos
 amazon_sales[['Qty','Amount']].describe()
 
-## Analise dos dados do valor das vendas
+## Análise dos dados do valor das vendas
 # Criar subplots
-fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+fig, axs = plt.subplots(1, 2, figsize=(14, 7))
 
 # Histograma
 axs[0].hist(amazon_sales['Amount'], bins=30, color='blue', edgecolor='black')
@@ -79,7 +79,7 @@ axs[1].set_xlabel('Amount')
 plt.tight_layout()
 plt.show()
 
-# Analise das vendas por período
+# Análise das vendas por período
 
 # Calcular as vendas totais por dia
 df_diaria = amazon_sales.groupby(pd.Grouper(key='Date', freq='D'))['Amount'].sum().reset_index()
@@ -89,7 +89,7 @@ df_semanal = amazon_sales.groupby(pd.Grouper(key='Date', freq='W'))['Amount'].su
 # df_mensal = amazon_sales.groupby(pd.Grouper(key='Date', freq='ME'))['Amount'].sum().reset_index()
 
 # Criar subplots
-fig, axs = plt.subplots(1, 2, figsize=(18, 6))
+fig, axs = plt.subplots(1, 2, figsize=(14, 7))
 
 # Gráfico de valor de vendas totais por dia
 axs[0].plot(df_diaria['Date'], df_diaria['Amount'], marker='o')
@@ -140,7 +140,7 @@ componente_sazonal = decomposicao.seasonal
 componente_residuo = decomposicao.resid
 
 # Mostrar componentes individualmente
-plt.figure(figsize=(12, 8))
+plt.figure(figsize=(14, 7))
 
 plt.subplot(411)
 plt.plot(serie_temporal, label='Original')
@@ -178,7 +178,7 @@ for _, row in media_semanal.iterrows():
 media_semanal['Índice de Sazonalidade'] = indices_sazonalidade
 
 # Plotar o índice de sazonalidade ao longo das semanas
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(14, 7))
 plt.plot(media_semanal['Date'], media_semanal['Índice de Sazonalidade'], marker='o', linestyle='-')
 plt.xlabel('Semana')
 plt.ylabel('Índice de Sazonalidade')
@@ -188,11 +188,11 @@ plt.tick_params(axis='x', rotation=45)
 plt.tight_layout()
 plt.show()
 
-## Analise das vendas por canal
+## Análise das vendas por canal
 # Calcular o volume financeiro de vendas por Fulfilment
 sales_by_fulfilment = amazon_sales.groupby('Fulfilment')['Amount'].sum().reset_index()
 
-fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+fig, axes = plt.subplots(1, 3, figsize=(14, 7))
 
 # Gráfico de Barras
 axes[0].bar(sales_by_fulfilment['Fulfilment'], sales_by_fulfilment['Amount'], color='skyblue')
@@ -209,18 +209,179 @@ for bar in axes[0].patches:
 axes[0].yaxis.set_major_formatter(FuncFormatter(millions))
 axes[0].tick_params(axis='x', rotation=45)
 
-# Gráfico de Pizza
-axes[1].pie(sales_by_fulfilment['Amount'], labels=sales_by_fulfilment['Fulfilment'], autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired(range(len(sales_by_fulfilment))))
-# axes[1].set_title('Distribuição do Volume Financeiro de Vendas por Fulfilment')
-
 # Boxplot
-amazon_sales.boxplot(column='Amount', by='Fulfilment', grid=False, ax=axes[2])
-axes[2].set_xlabel('Fulfilment')
-axes[2].set_ylabel('Volume Financeiro de Vendas')
+amazon_sales.boxplot(column='Amount', by='Fulfilment', grid=False, ax=axes[1])
+axes[1].set_xlabel('Fulfilment')
+axes[1].set_ylabel('Volume Financeiro de Vendas')
 # axes[2].set_title('Distribuição do Volume Financeiro de Vendas por Fulfilment')
-axes[2].tick_params(axis='x', rotation=45)
+axes[1].tick_params(axis='x', rotation=45)
+
+# Gráfico de Pizza
+axes[2].pie(sales_by_fulfilment['Amount'], labels=sales_by_fulfilment['Fulfilment'], autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired(range(len(sales_by_fulfilment))))
+# axes[1].set_title('Distribuição do Volume Financeiro de Vendas por Fulfilment')
 
 # Ajustar layout para evitar sobreposição
 plt.suptitle('Distribuição do Volume Financeiro de Vendas por Fulfilment')
+plt.tight_layout()
+plt.show()
+
+## Análise das vendas por categoria de produto
+# Calcular o volume financeiro de vendas por Categoria
+sales_by_category = amazon_sales.groupby('Category')['Amount'].sum().reset_index()
+
+# Ordenar do maior para o menor
+sales_by_category = sales_by_category.sort_values(by='Amount', ascending=False)
+
+# Criar figura e eixos
+fig, axes = plt.subplots(1, 3, figsize=(14 , 7))
+
+# Gráfico de barras
+axes[0].bar(sales_by_category['Category'], sales_by_category['Amount'], color='skyblue')
+axes[0].set_xlabel('Categoria')
+axes[0].set_ylabel('Volume Financeiro de Vendas')
+# axes[0].set_title('Volume Financeiro de Vendas por Categoria')
+axes[0].tick_params(axis='x', rotation=45)
+
+# Adicionar os valores de cada barra em milhões
+for bar in axes[0].containers[0]:
+    yval = bar.get_height()
+    axes[0].text(bar.get_x() + bar.get_width() / 2, yval, f'{yval / 1e6:.2f}M', va='bottom', ha='center')
+
+# Ajustar o eixo y para uma escala mais compreensível
+axes[0].yaxis.set_major_formatter(FuncFormatter(millions))
+
+# Criar o boxplot
+amazon_sales.boxplot(column='Amount', by='Category', grid=False, ax=axes[1])
+axes[1].set_xlabel('Categoria')
+axes[1].set_ylabel('Volume Financeiro de Vendas')
+# axes[1].set_title('Distribuição do Volume Financeiro de Vendas por Categoria')
+axes[1].tick_params(axis='x', rotation=45)
+axes[1].set_suptitle('')
+
+# Calcular o volume financeiro de vendas por Categoria
+# sales_by_category = amazon_sales.groupby('Category')['Amount'].sum().reset_index()
+
+# Calcular o percentual de cada categoria
+total_amount = sales_by_category['Amount'].sum()
+sales_by_category['Percentage'] = sales_by_category['Amount'] / total_amount * 100
+
+# Agrupar categorias com percentual <= 5% em "Other"
+other = sales_by_category[sales_by_category['Percentage'] <= 5].sum()
+other['Category'] = 'Other'
+other['Percentage'] = other['Amount'] / total_amount * 100
+
+# Filtrar categorias com percentual > 5% e adicionar a categoria "Other"
+sales_by_category = sales_by_category[sales_by_category['Percentage'] > 5]
+sales_by_category = pd.concat([sales_by_category, other.to_frame().T], ignore_index=True)
+
+# Ordenar as categorias do maior para o menor percentual
+sales_by_category = sales_by_category.sort_values(by='Percentage', ascending=False)
+
+# Criar o gráfico de pizza
+axes[2].pie(sales_by_category['Amount'], labels=sales_by_category['Category'], autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired(range(len(sales_by_category))))
+# axes[2].set_title('Distribuição do Volume Financeiro de Vendas por Categoria')
+axes[2].axis('equal')  # Assegura que o gráfico de pizza seja desenhado como um círculo.
+
+plt.suptitle('Distribuição do Volume Financeiro de Vendas por Categoria')
+plt.tight_layout()
+plt.show()
+
+## Análisendo os outliers que observamos nas anallises anteriores
+# Calcular os quartis e o IQR (Interquartile Range)
+Q1 = amazon_sales['Amount'].quantile(0.25)
+Q3 = amazon_sales['Amount'].quantile(0.75)
+IQR = Q3 - Q1
+
+# Definir os limites inferior e superior para identificar os outliers
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Identificar os outliers
+outliers = amazon_sales[(amazon_sales['Amount'] < lower_bound) | (amazon_sales['Amount'] > upper_bound)]
+
+# Criar uma nova coluna 'B2B_SimNao' com valores "Sim" ou "Não" baseados na coluna 'B2B'
+outliers['B2B_SimNao'] = outliers['B2B'].apply(lambda x: 'Sim' if x else 'Não')
+
+# Criar a nova coluna 'Promocao' com base na coluna 'promotion-ids'
+outliers['Promocao'] = outliers['promotion-ids'].apply(lambda x: 'Sim' if pd.notnull(x) else 'Não')
+
+print(f"Total de outliers encontrados: {len(outliers)}")
+print(outliers[['Order ID', 'Date', 'Category', 'Fulfilment', 'B2B', 'SKU', 'Amount']])
+
+# Estatísticas descritivas dos outliers
+outliers_descriptive = outliers.describe()
+
+print(outliers_descriptive)
+
+# Configurar a figura e os subplots
+fig, axs = plt.subplots(2, 2, figsize=(14, 7))
+
+# Histograma dos outliers
+axs[0, 0].hist(outliers['Amount'], bins=50, color='skyblue', edgecolor='black')
+axs[0, 0].set_xlabel('Volume Financeiro (Amount)')
+axs[0, 0].set_ylabel('Frequência')
+# axs[0, 0].set_title('Distribuição dos Outliers de Volume Financeiro de Vendas')
+
+# Scatter plot dos outliers por Categoria
+axs[0, 1].scatter(outliers['Category'], outliers['Amount'], color='red', alpha=0.6)
+axs[0, 1].set_xlabel('Categoria')
+axs[0, 1].set_ylabel('Volume Financeiro (Amount)')
+# axs[0, 1].set_title('Outliers de Volume Financeiro de Vendas por Categoria')
+axs[0, 1].tick_params(axis='x', rotation=45)
+
+# Scatter plot dos outliers por Fulfilment
+axs[1, 0].scatter(outliers['Fulfilment'], outliers['Amount'], color='blue', alpha=0.6)
+axs[1, 0].set_xlabel('Fulfilment')
+axs[1, 0].set_ylabel('Volume Financeiro (Amount)')
+# axs[1, 0].set_title('Outliers de Volume Financeiro de Vendas por Fulfilment')
+axs[1, 0].tick_params(axis='x', rotation=45)
+
+# Scatter plot dos outliers por B2B
+axs[1, 1].scatter(outliers['B2B_SimNao'], outliers['Amount'], color='green', alpha=0.6)
+axs[1, 1].set_xlabel('Cliente B2B')
+axs[1, 1].set_ylabel('Volume Financeiro (Amount)')
+# axs[1, 1].set_title('Outliers de Volume Financeiro de Vendas por B2B')
+axs[1, 1].tick_params(axis='x', rotation=45)
+
+# Ajustar o layout para evitar sobreposição
+plt.suptitle('Análise de Outliers')
+plt.tight_layout()
+plt.show()
+
+# Verificar concentração de outliers por data
+outliers_date = outliers.groupby('Date').size().reset_index(name='Count')
+
+# Analisar se os outliers estão associados a promoções específicas
+outliers_promotion = outliers['Promocao'].value_counts()
+
+# Verificar padrão específico no campo ship-service-level
+outliers_ship_service = outliers['Status'].value_counts()
+
+# Configurar a figura e os subplots
+fig, axs = plt.subplots(1, 3, figsize=(14 , 7))
+
+# Gráfico de linha para concentração de outliers por data
+axs[0].plot(outliers_date['Date'], outliers_date['Count'], marker='o')
+axs[0].set_xlabel('Data')
+axs[0].set_ylabel('Número de Outliers')
+axs[0].set_title('Concentração de Outliers por Data')
+axs[0].tick_params(axis='x', rotation=45)
+
+# Gráfico de barras para outliers associados a promoções específicas
+axs[1].bar(outliers_promotion.index, outliers_promotion.values, color='green')
+axs[1].set_xlabel('Promoção')
+axs[1].set_ylabel('Número de Outliers')
+axs[1].set_title('Outliers Associados a Promoções Específicas')
+axs[1].tick_params(axis='x', rotation=90)
+
+# Gráfico de barras para outliers por status do pedido
+axs[2].bar(outliers_ship_service.index, outliers_ship_service.values, color='purple')
+axs[2].set_xlabel('Status do Pedido')
+axs[2].set_ylabel('Número de Outliers')
+axs[2].set_title('Outliers por Status de Pedido')
+axs[2].tick_params(axis='x', rotation=90)
+
+# Ajustar o layout para evitar sobreposição
+plt.suptitle('Análise de Outliers')
 plt.tight_layout()
 plt.show()
